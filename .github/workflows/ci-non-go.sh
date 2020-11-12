@@ -22,10 +22,6 @@ if ! shfmt -f . | xargs shellcheck; then
 	failed=1
 fi
 
-if ! terraform fmt -write -recursive deploy/terraform/; then
-	failed=1
-fi
-
 if ! git diff | (! grep .); then
 	failed=1
 fi
