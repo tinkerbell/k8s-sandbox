@@ -10,5 +10,5 @@ in { pkgs ? import (_pkgs.fetchFromGitHub {
 with pkgs;
 
 mkShell {
-  buildInputs = [ go nodePackages.prettier shellcheck shfmt terraform ];
+  buildInputs = [ go nodePackages.prettier shellcheck shfmt ];
 }
