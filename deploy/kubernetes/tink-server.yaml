@@ -1,0 +1,154 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tink-server
+  name: tink-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tink-server
+  template:
+    metadata:
+      labels:
+        app: tink-server
+    spec:
+      containers:
+        - env:
+            - name: FACILITY
+              valueFrom:
+                secretKeyRef:
+                  name: tinkerbell
+                  key: FACILITY
+            - name: PACKET_ENV
+              valueFrom:
+                secretKeyRef:
+                  name: tinkerbell
+                  key: PACKET_ENV
+            - name: PACKET_VERSION
+              valueFrom:
+                secretKeyRef:
+                  name: tinkerbell
+                  key: PACKET_VERSION
+            - name: PGDATABASE
+              value: tinkerbell
+            - name: PGHOST
+              value: db
+            - name: PGPASSWORD
+              value: tinkerbell
+            - name: PGPORT
+              value: "5432"
+            - name: PGSSLMODE
+              value: disable
+            - name: PGUSER
+              value: tinkerbell
+            - name: ROLLBAR_DISABLE
+              valueFrom:
+                secretKeyRef:
+                  name: tinkerbell
+                  key: ROLLBAR_DISABLE
+            - name: ROLLBAR_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: tinkerbell
+                  key: ROLLBAR_TOKEN
+            - name: TINKERBELL_GRPC_AUTHORITY
+              value: :42113
+            - name: TINKERBELL_HTTP_AUTHORITY
+              value: :42114
+            - name: TINK_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tinkerbell
+                  key: TINKERBELL_TINK_PASSWORD
+            - name: TINK_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: tinkerbell
+                  key: TINKERBELL_TINK_USERNAME
+          image: quay.io/tinkerbell/tink:sha-0e8e5733
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /cert
+              port: 42114
+          name: tink-server
+          ports:
+            - containerPort: 42113
+            - containerPort: 42114
+          readinessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /cert
+              port: 42114
+          volumeMounts:
+            - mountPath: /certs/onprem
+              name: certs
+      initContainers:
+        - env:
+            - name: FACILITY
+              valueFrom:
+                secretKeyRef:
+                  name: tinkerbell
+                  key: FACILITY
+            - name: ONLY_MIGRATION
+              value: "true"
+            - name: PGDATABASE
+              value: tinkerbell
+            - name: PGHOST
+              value: db
+            - name: PGPASSWORD
+              value: tinkerbell
+            - name: PGPORT
+              value: "5432"
+            - name: PGSSLMODE
+              value: disable
+            - name: PGUSER
+              value: tinkerbell
+            - name: TINKERBELL_GRPC_AUTHORITY
+              value: :42113
+            - name: TINKERBELL_HTTP_AUTHORITY
+              value: :42114
+            - name: TINK_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tinkerbell
+                  key: TINKERBELL_TINK_PASSWORD
+            - name: TINK_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: tinkerbell
+                  key: TINKERBELL_TINK_USERNAME
+          image: quay.io/tinkerbell/tink:sha-0e8e5733
+          imagePullPolicy: Always
+          name: migration
+          volumeMounts:
+            - mountPath: /certs/onprem
+              name: certs
+      volumes:
+        - name: certs
+          secret:
+            secretName: certs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: tink-server
+  name: tink-server
+spec:
+  ports:
+    - name: "42113"
+      nodePort: 42113
+      port: 42113
+      targetPort: 42113
+    - name: "42114"
+      nodePort: 42114
+      port: 42114
+      targetPort: 42114
+  selector:
+    app: tink-server
+  type: NodePort
