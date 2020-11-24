@@ -1,0 +1,27 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: tink-cli
+  name: tink-cli
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tink-cli
+  template:
+    metadata:
+      labels:
+        app: tink-cli
+    spec:
+      containers:
+        - env:
+            - name: TINKERBELL_CERT_URL
+              value: http://tink-server:42114/cert
+            - name: TINKERBELL_GRPC_AUTHORITY
+              value: tink-server:42113
+          image: quay.io/tinkerbell/tink-cli:sha-0e8e5733
+          imagePullPolicy: Always
+          name: tink-cli
+      restartPolicy: Always
