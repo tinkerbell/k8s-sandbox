@@ -14,103 +14,57 @@ spec:
     type: Recreate
   template:
     metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "interface": "net1",
+              "ips": [
+                "192.168.1.1/29"
+              ],
+              "name": "tink",
+              "namespace": "default"
+            }
+          ]
       labels:
         app: boots
     spec:
       containers:
         - args:
-            - -dhcp-addr
-            - 0.0.0.0:67
-            - -tftp-addr
-            - 0.0.0.0:69
-            - -http-addr
-            - 0.0.0.0:80
             - -log-level
             - DEBUG
+          envFrom:
+            - configMapRef:
+                name: boots
+            - secretRef:
+                name: packet
+            - secretRef:
+                name: registry
           env:
-            - name: PUBLIC_IP
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: TINKERBELL_HOST_IP
-            - name: API_AUTH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: PACKET_API_AUTH_TOKEN
-            - name: API_CONSUMER_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: PACKET_CONSUMER_TOKEN
             - name: BOOTP_BIND
               value: 0.0.0.0:67
-            - name: DATA_MODEL_VERSION
-              value: "1"
-            - name: DNS_SERVERS
-              value: 8.8.8.8
-            - name: DOCKER_REGISTRY
-              value: "$(PUBLIC_IP)"
-            - name: ELASTIC_SEARCH_URL
-              value: "$(PUBLIC_IP):9200"
             - name: FACILITY_CODE
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: FACILITY
+              value: "$(FACILITY)"
             - name: HTTP_BIND
               value: 0.0.0.0:80
-            - name: MIRROR_HOST
-              value: "$(PUBLIC_IP):8080"
-            - name: PACKET_ENV
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: PACKET_ENV
-            - name: PACKET_VERSION
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: PACKET_VERSION
-            - name: REGISTRY_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: TINKERBELL_REGISTRY_PASSWORD
-            - name: REGISTRY_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: TINKERBELL_REGISTRY_USERNAME
-            - name: ROLLBAR_DISABLE
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: ROLLBAR_DISABLE
-            - name: ROLLBAR_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: ROLLBAR_TOKEN
             - name: SYSLOG_BIND
               value: 0.0.0.0:514
             - name: TFTP_BIND
               value: 0.0.0.0:69
-            - name: TINKERBELL_CERT_URL
-              value: "http://$(PUBLIC_IP):42114/cert"
-            - name: TINKERBELL_GRPC_AUTHORITY
-              value: "$(PUBLIC_IP):42113"
           image: quay.io/tinkerbell/boots:sha-e81a291c
           imagePullPolicy: Always
           name: boots
           ports:
             - containerPort: 67
+              name: dhcp
               protocol: UDP
             - containerPort: 69
+              hostPort: 69
+              name: tftp
               protocol: UDP
             - containerPort: 80
-      dnsPolicy: ClusterFirstWithHostNet
-      hostNetwork: true
+              hostPort: 80
+              name: http
       restartPolicy: Always
 ---
 apiVersion: v1
@@ -121,17 +75,16 @@ metadata:
   name: boots
 spec:
   ports:
-    - name: "67"
+    - name: dhcp
       port: 67
       protocol: UDP
-      targetPort: 67
-    - name: "69"
+      targetPort: dhcp
+    - name: tftp
       port: 69
       protocol: UDP
-      targetPort: 69
-    - name: "80"
+      targetPort: tftp
+    - name: http
       port: 80
-      targetPort: 80
+      targetPort: http
   selector:
     app: boots
-  type: ClusterIP
