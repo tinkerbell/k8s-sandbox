@@ -388,9 +388,15 @@ start_components() (
 )
 
 create_secrets() (
-	awk '/^export /{print $2}' .env | sed "s/\([\"']\)\(.*\)\1\$/\2/g" | kubectl create secret generic tinkerbell --from-env-file=/dev/stdin --dry-run=client -o yaml | kubectl apply -f-
-	kubectl create secret generic certs --from-file=deploy/state/certs/ --dry-run=client -o yaml | kubectl apply -f-
-	kubectl create configmap db-init --from-file=deploy/db/ --dry-run=client -o yaml | kubectl apply -f-
+	awk '/^export /{print $2}' .env | sed "s/\([\"']\)\(.*\)\1\$/\2/g" | kubectl create secret generic tinkerbell --from-env-file=/dev/stdin --dry-run=client -o yaml > "$DEPLOYDIR/kubernetes/envrc.yaml"
+	kubectl create secret generic certs --from-file=deploy/state/certs/ --dry-run=client -o yaml > "$DEPLOYDIR/kubernetes/certs.yaml"
+	kubectl create configmap db-init --from-file=deploy/db/ --dry-run=client -o yaml > "$DEPLOYDIR/kubernetes/db-init.yaml"
+)
+
+install_secrets() (
+	for res in envrc certs db-init; do
+		kubectl apply -f "$DEPLOYDIR/kubernetes/$res.yaml"
+	done
 )
 
 command_exists() (
@@ -447,7 +453,7 @@ check_prerequisites() (
 )
 
 whats_next() (
-	echo "$NEXT  1. Run 'kubectl apply -f /vagrant/deploy/kubernetes'."
+	echo "$NEXT  1. Run 'kubectl apply -f /$DEPLOYDIR/deploy/kubernetes'."
 	echo "$BLANK 2. Try executing your fist workflow."
 	echo "$BLANK    Follow the steps described in https://tinkerbell.org/examples/hello-world/ to say 'Hello World!' with a workflow."
 )
@@ -473,6 +479,7 @@ do_setup() (
 	setup_osie
 	generate_certificates
 	create_secrets
+	install_secrets
 	setup_docker_registry
 
 	echo "$INFO tinkerbell stack setup completed successfully on $lsb_dist server"
