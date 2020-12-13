@@ -72,10 +72,17 @@ export TINKERBELL_CIDR=29
 #
 # The host IP should the first IP in the range, and the Nginx IP
 # should be the second address.
-export TINKERBELL_HOST_IP=192.168.1.1
+export TINKERBELL_HOST_IP=${TINKERBELL_HOST_IP:-192.168.1.1}
 
 # NGINX IP is used by provisioner to serve files required for iPXE boot
-export TINKERBELL_NGINX_IP=192.168.1.2
+export TINKERBELL_NGINX_IP=${TINKERBELL_NGINX_IP:-192.168.1.1}
+export TINKERBELL_NGINX_URL=${TINKERBELL_NGINX_URL:-http://192.168.1.1:8080}
+
+# Docker Registry IP
+export TINKERBELL_REGISTRY_IP=${TINKERBELL_REGISTRY_IP:-192.168.1.1}
+
+# Tink server IP
+export TINKERBELL_TINK_IP=${TINKERBELL_TINK_IP:-192.168.1.1}
 
 # Tink server username and password
 export TINKERBELL_TINK_USERNAME=admin

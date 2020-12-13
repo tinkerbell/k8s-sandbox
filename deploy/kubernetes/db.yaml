@@ -37,6 +37,7 @@ spec:
           name: db
           ports:
             - containerPort: 5432
+              name: psql
           readinessProbe:
             exec:
               command:
@@ -69,12 +70,11 @@ metadata:
   name: db
 spec:
   ports:
-    - name: "5432"
+    - name: psql
       port: 5432
-      targetPort: 5432
+      targetPort: psql
   selector:
     app: db
-  type: ClusterIP
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

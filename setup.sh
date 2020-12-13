@@ -388,9 +388,9 @@ start_components() (
 )
 
 create_secrets() (
-	awk '/^export /{print $2}' .env | sed "s/\([\"']\)\(.*\)\1\$/\2/g" | kubectl create secret generic tinkerbell --from-env-file=/dev/stdin --dry-run=client -o yaml > "$DEPLOYDIR/kubernetes/envrc.yaml"
-	kubectl create secret generic certs --from-file=deploy/state/certs/ --dry-run=client -o yaml > "$DEPLOYDIR/kubernetes/certs.yaml"
-	kubectl create configmap db-init --from-file=deploy/db/ --dry-run=client -o yaml > "$DEPLOYDIR/kubernetes/db-init.yaml"
+	awk '/^export /{print $2}' .env | sed "s/\([\"']\)\(.*\)\1\$/\2/g" | kubectl create secret generic tinkerbell --from-env-file=/dev/stdin --dry-run=client -o yaml >"$DEPLOYDIR/kubernetes/envrc.yaml"
+	kubectl create secret generic certs --from-file=deploy/state/certs/ --dry-run=client -o yaml >"$DEPLOYDIR/kubernetes/certs.yaml"
+	kubectl create configmap db-init --from-file=deploy/db/ --dry-run=client -o yaml >"$DEPLOYDIR/kubernetes/db-init.yaml"
 )
 
 install_secrets() (
@@ -453,7 +453,7 @@ check_prerequisites() (
 )
 
 whats_next() (
-	echo "$NEXT  1. Run 'kubectl apply -f /$DEPLOYDIR/deploy/kubernetes'."
+	echo "$NEXT  1. Run 'kubectl apply -f $DEPLOYDIR/kubernetes'."
 	echo "$BLANK 2. Try executing your fist workflow."
 	echo "$BLANK    Follow the steps described in https://tinkerbell.org/examples/hello-world/ to say 'Hello World!' with a workflow."
 )

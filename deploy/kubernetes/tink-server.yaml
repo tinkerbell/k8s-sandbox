@@ -10,8 +10,22 @@ spec:
   selector:
     matchLabels:
       app: tink-server
+  strategy:
+    type: Recreate
   template:
     metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "interface": "net1",
+              "ips": [
+                "192.168.1.4/29"
+              ],
+              "name": "tink",
+              "namespace": "default"
+            }
+          ]
       labels:
         app: tink-server
     spec:
@@ -78,7 +92,11 @@ spec:
           name: tink-server
           ports:
             - containerPort: 42113
+              hostPort: 42113
+              name: grpc
             - containerPort: 42114
+              hostPort: 42114
+              name: http
           readinessProbe:
             httpGet:
               scheme: HTTP
@@ -141,14 +159,11 @@ metadata:
   name: tink-server
 spec:
   ports:
-    - name: "42113"
-      nodePort: 42113
+    - name: grpc
       port: 42113
-      targetPort: 42113
-    - name: "42114"
-      nodePort: 42114
+      targetPort: grpc
+    - name: http
       port: 42114
-      targetPort: 42114
+      targetPort: http
   selector:
     app: tink-server
-  type: NodePort

@@ -59,8 +59,11 @@ spec:
           name: hegel
           ports:
             - containerPort: 42115
+              hostPort: 42115
+              name: grpc
             - containerPort: 50061
               hostPort: 50061
+              name: http
       restartPolicy: Always
 ---
 apiVersion: v1
@@ -71,12 +74,11 @@ metadata:
   name: hegel
 spec:
   ports:
-    - name: "42115"
+    - name: grpc
       port: 42115
-      targetPort: 42115
-    - name: "50061"
+      targetPort: grpc
+    - name: http
       port: 50061
-      targetPort: 50061
+      targetPort: http
   selector:
     app: hegel
-  type: ClusterIP

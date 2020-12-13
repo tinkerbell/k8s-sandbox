@@ -14,6 +14,18 @@ spec:
     type: Recreate
   template:
     metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "interface": "net1",
+              "ips": [
+                "192.168.1.1/29"
+              ],
+              "name": "tink",
+              "namespace": "default"
+            }
+          ]
       labels:
         app: boots
     spec:
@@ -50,7 +62,10 @@ spec:
             - name: DNS_SERVERS
               value: 8.8.8.8
             - name: DOCKER_REGISTRY
-              value: "$(PUBLIC_IP)"
+              valueFrom:
+                secretKeyRef:
+                  name: tinkerbell
+                  key: TINKERBELL_REGISTRY_IP
             - name: ELASTIC_SEARCH_URL
               value: "$(PUBLIC_IP):9200"
             - name: FACILITY_CODE
@@ -60,8 +75,11 @@ spec:
                   key: FACILITY
             - name: HTTP_BIND
               value: 0.0.0.0:80
-            - name: MIRROR_HOST
-              value: "$(PUBLIC_IP):8080"
+            - name: MIRROR_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: tinkerbell
+                  key: TINKERBELL_NGINX_URL
             - name: PACKET_ENV
               valueFrom:
                 secretKeyRef:
@@ -96,21 +114,29 @@ spec:
               value: 0.0.0.0:514
             - name: TFTP_BIND
               value: 0.0.0.0:69
+            - name: TINKERBELL_IP
+              valueFrom:
+                secretKeyRef:
+                  name: tinkerbell
+                  key: TINKERBELL_TINK_IP
             - name: TINKERBELL_CERT_URL
-              value: "http://$(PUBLIC_IP):42114/cert"
+              value: "http://$(TINKERBELL_IP):42114/cert"
             - name: TINKERBELL_GRPC_AUTHORITY
-              value: "$(PUBLIC_IP):42113"
+              value: "$(TINKERBELL_IP):42113"
           image: quay.io/tinkerbell/boots:sha-e81a291c
           imagePullPolicy: Always
           name: boots
           ports:
             - containerPort: 67
+              name: dhcp
               protocol: UDP
             - containerPort: 69
+              hostPort: 69
+              name: tftp
               protocol: UDP
             - containerPort: 80
-      dnsPolicy: ClusterFirstWithHostNet
-      hostNetwork: true
+              hostPort: 80
+              name: http
       restartPolicy: Always
 ---
 apiVersion: v1
@@ -121,17 +147,16 @@ metadata:
   name: boots
 spec:
   ports:
-    - name: "67"
+    - name: dhcp
       port: 67
       protocol: UDP
-      targetPort: 67
-    - name: "69"
+      targetPort: dhcp
+    - name: tftp
       port: 69
       protocol: UDP
-      targetPort: 69
-    - name: "80"
+      targetPort: tftp
+    - name: http
       port: 80
-      targetPort: 80
+      targetPort: http
   selector:
     app: boots
-  type: ClusterIP
