@@ -18,7 +18,7 @@ sudo chmod +x /usr/local/bin/kind
 ### [kind] Create kind cluster
 
 ```
-kind cluster create --config kind-config.yaml
+kind create cluster --config kind-config.yaml
 ```
 
 ### Fix networking on Docker
@@ -76,10 +76,6 @@ kubectl apply -f multus-networks.yaml
 
 ```
 kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/v0.34.2/kubevirt-operator.yaml
-
-# Skip if emulation is not required
-kubectl create configmap kubevirt-config -n kubevirt --from-literal debug.useEmulation=true
-
 kubectl apply -f https://github.com/kubevirt/kubevirt/releases/download/v0.34.2/kubevirt-cr.yaml
 ```
 
