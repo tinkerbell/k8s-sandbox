@@ -1,0 +1,38 @@
+---
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: tink
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "name": "tink",
+      "plugins": [
+        {
+          "bridge": "tink",
+          "ipam": {
+            "type": "static"
+          },
+          "type": "bridge"
+        }
+      ]
+    }
+---
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: tink-no-ip
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "name": "tink-no-ip",
+      "plugins": [
+        {
+          "bridge": "tink",
+          "ipam": {},
+          "type": "bridge"
+        }
+      ]
+    }

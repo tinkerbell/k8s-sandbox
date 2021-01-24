@@ -10,8 +10,22 @@ spec:
   selector:
     matchLabels:
       app: nginx
+  strategy:
+    type: Recreate
   template:
     metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "interface": "net1",
+              "ips": [
+                "192.168.1.2/29"
+              ],
+              "name": "tink",
+              "namespace": "default"
+            }
+          ]
       labels:
         app: nginx
     spec:
@@ -21,18 +35,19 @@ spec:
           name: nginx
           ports:
             - containerPort: 80
-          tty: true
+              hostPort: 8080
+              name: http
           volumeMounts:
-            - mountPath: /usr/share/nginx/html/
+            - mountPath: /usr/share/nginx/html
               name: nginx-data
       restartPolicy: Always
       volumes:
         - name: nginx-data
-          # persistentVolumeClaim:
-          #   claimName: nginx-data
-          hostPath:
-            path: /vagrant/deploy/state/webroot
-            type: Directory
+          persistentVolumeClaim:
+            claimName: nginx-data
+        - name: source-certs
+          secret:
+            secretName: certs
 ---
 apiVersion: v1
 kind: Service
@@ -42,23 +57,21 @@ metadata:
   name: nginx
 spec:
   ports:
-    - name: "80"
-      nodePort: 8080
+    - name: http
       port: 80
-      targetPort: 80
+      targetPort: http
   selector:
     app: nginx
-  type: NodePort
-# ---
-# apiVersion: v1
-# kind: PersistentVolumeClaim
-# metadata:
-#   labels:
-#     app: nginx
-#   name: nginx-data
-# spec:
-#   accessModes:
-#     - ReadWriteOnce
-#   resources:
-#     requests:
-#       storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: nginx
+  name: nginx-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

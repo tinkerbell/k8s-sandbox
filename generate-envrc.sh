@@ -49,58 +49,114 @@ generate_envrc() (
 
 	validate_tinkerbell_network_interface "$tink_interface"
 
+	TINKERBELL_HOST_IP=${TINKERBELL_HOST_IP:-192.168.1.1}
+	TINKERBELL_NGINX_IP=${TINKERBELL_NGINX_IP:-$TINKERBELL_HOST_IP}
+	TINKERBELL_NGINX_URL=${TINKERBELL_NGINX_URL:-http://$TINKERBELL_NGINX_IP:8080}
+	TINKERBELL_REGISTRY_IP=${TINKERBELL_REGISTRY_IP:-$TINKERBELL_HOST_IP}
+	TINKERBELL_TINK_IP=${TINKERBELL_TINK_IP:-$TINKERBELL_HOST_IP}
+
 	local tink_password
 	tink_password=$(generate_password)
 	local registry_password
 	registry_password=$(generate_password)
 	cat <<EOF
-# Tinkerbell Stack version
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: boots
+data:
+  DATA_MODEL_VERSION: "1"
+  DNS_SERVERS: 8.8.8.8
+  DOCKER_REGISTRY: ${TINKERBELL_REGISTRY_IP}
+  MIRROR_BASE_URL: ${TINKERBELL_NGINX_URL}
+  PUBLIC_IP: ${TINKERBELL_HOST_IP}
+  TINKERBELL_CERT_URL: http://${TINKERBELL_TINK_IP}:42114/cert
+  TINKERBELL_GRPC_AUTHORITY: ${TINKERBELL_TINK_IP}:42113
 
-export OSIE_DOWNLOAD_LINK=${OSIE_DOWNLOAD_LINK}
-export TINKERBELL_TINK_WORKER_IMAGE=${TINKERBELL_TINK_WORKER_IMAGE}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dhcrelay
+data:
+  IF_DOWNSTREAM: $tink_interface
+  IF_UPSTREAM: cni0
 
-# Network interface for Tinkerbell's network
-export TINKERBELL_NETWORK_INTERFACE="$tink_interface"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tink-client
+data:
+  DATA_MODEL_VERSION: "1"
+  TINKERBELL_CERT_URL: http://tink-server.default.svc.cluster.local:42114/cert
+  TINKERBELL_GRPC_AUTHORITY: tink-server.default.svc.cluster.local:42113
 
-# Decide on a subnet for provisioning. Tinkerbell should "own" this
-# network space. Its subnet should be just large enough to be able
-# to provision your hardware.
-export TINKERBELL_CIDR=29
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tink-init
+data:
+  OSIE_DOWNLOAD_LINK: ${OSIE_DOWNLOAD_LINK}
+  TINKERBELL_TINK_WORKER_IMAGE: ${TINKERBELL_TINK_WORKER_IMAGE}
 
-# Host IP is used by provisioner to expose different services such as
-# tink, boots, etc.
-#
-# The host IP should the first IP in the range, and the Nginx IP
-# should be the second address.
-export TINKERBELL_HOST_IP=192.168.1.1
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db
+stringData:
+  PGDATABASE: tinkerbell
+  PGHOST: db.default.svc.cluster.local
+  PGPASSWORD: tinkerbell
+  PGPORT: "5432"
+  PGSSLMODE: disable
+  PGUSER: tinkerbell
+type: Opaque
 
-# NGINX IP is used by provisioner to serve files required for iPXE boot
-export TINKERBELL_NGINX_IP=192.168.1.2
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: packet
+stringData:
+  API_AUTH_TOKEN: ${PACKET_API_AUTH_TOKEN:-ignored}
+  API_BASE_URL: ignored
+  API_CONSUMER_TOKEN: ${PACKET_CONSUMER_TOKEN:-ignored}
+  PACKET_ENV: ${PACKET_ENV:-testing}
+  PACKET_VERSION: ${PACKET_VERSION:-ignored}
+  ROLLBAR_DISABLE: "1"
+  ROLLBAR_TOKEN: ignored
+type: Opaque
 
-# Tink server username and password
-export TINKERBELL_TINK_USERNAME=admin
-export TINKERBELL_TINK_PASSWORD="$tink_password"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: registry
+stringData:
+  REGISTRY_HOST: registry.default.svc.cluster.local
+  REGISTRY_USERNAME: admin
+  REGISTRY_PASSWORD: $registry_password
+type: Opaque
 
-# Docker Registry's username and password
-export TINKERBELL_REGISTRY_USERNAME=admin
-export TINKERBELL_REGISTRY_PASSWORD="$registry_password"
-
-# Packet Specific
-export PACKET_API_AUTH_TOKEN="${PACKET_API_AUTH_TOKEN:-ignored}"
-export PACKET_CONSUMER_TOKEN="${PACKET_CONSUMER_TOKEN:-ignored}"
-export PACKET_ENV="${PACKET_ENV:-testing}"
-export PACKET_VERSION="${PACKET_VERSION:-ignored}"
-
-# Legacy options, to be deleted:
-export FACILITY=onprem
-export ROLLBAR_TOKEN=ignored
-export ROLLBAR_DISABLE=1
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tink-auth
+stringData:
+  TINK_AUTH_USERNAME: admin
+  TINK_AUTH_PASSWORD: $tink_password
+type: Opaque
 EOF
 )
 
 main() (
 	if [ -z "${1:-}" ]; then
-		err "Usage: $0 network-interface-name > .env"
+		err "Usage: $0 network-interface-name > envrc.yaml"
 		exit 1
 	fi
 

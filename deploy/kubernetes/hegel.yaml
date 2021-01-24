@@ -18,49 +18,33 @@ spec:
         app: hegel
     spec:
       containers:
-        - env:
-            - name: DATA_MODEL_VERSION
-              value: "1"
+        - args:
+            - -log-level
+            - DEBUG
+          envFrom:
+            - configMapRef:
+                name: tink-client
+            - secretRef:
+                name: packet
+          env:
             - name: GRPC_PORT
               value: "42115"
             - name: HEGEL_FACILITY
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: FACILITY
+              value: "$(FACILITY)"
+            - name: HEGEL_HTTP_PORT
+              value: "50061"
             - name: HEGEL_USE_TLS
               value: "0"
-            - name: PACKET_ENV
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: PACKET_ENV
-            - name: PACKET_VERSION
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: PACKET_VERSION
-            - name: ROLLBAR_DISABLE
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: ROLLBAR_DISABLE
-            - name: ROLLBAR_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: tinkerbell
-                  key: ROLLBAR_TOKEN
-            - name: TINKERBELL_CERT_URL
-              value: http://tink-server:42114/cert
-            - name: TINKERBELL_GRPC_AUTHORITY
-              value: tink-server:42113
           image: quay.io/tinkerbell/hegel:sha-c17b512f
           imagePullPolicy: Always
           name: hegel
           ports:
             - containerPort: 42115
+              hostPort: 42115
+              name: grpc
             - containerPort: 50061
               hostPort: 50061
+              name: http
       restartPolicy: Always
 ---
 apiVersion: v1
@@ -71,12 +55,11 @@ metadata:
   name: hegel
 spec:
   ports:
-    - name: "42115"
+    - name: grpc
       port: 42115
-      targetPort: 42115
-    - name: "50061"
+      targetPort: grpc
+    - name: http
       port: 50061
-      targetPort: 50061
+      targetPort: http
   selector:
     app: hegel
-  type: ClusterIP

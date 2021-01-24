@@ -40,21 +40,17 @@ func TestVagrantSetupGuide(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = machine.Exec(ctx, "kubectl wait pods --all --for condition=ready --timeout 300s")
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = machine.Exec(ctx, "docker pull hello-world")
+	_, err = machine.Exec(ctx, "kubectl wait deploy --all --for condition=available --timeout 300s")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = machine.Exec(ctx, "docker tag hello-world 192.168.1.1/hello-world")
+	_, err = machine.Exec(ctx, "kubectl wait job --all --for condition=complete --timeout 1h")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = machine.Exec(ctx, "docker push 192.168.1.1/hello-world")
+	_, err = machine.Exec(ctx, "kubectl run skopeo -i --rm --restart=Never --image=none --overrides='{\"spec\":{\"containers\":[{\"args\":[\"copy\",\"--dest-creds=$(REGISTRY_USERNAME):$(REGISTRY_PASSWORD)\",\"--dest-tls-verify=false\",\"docker://docker.io/hello-world:latest\",\"docker://$(REGISTRY_HOST)/hello-world:latest\"],\"envFrom\":[{\"secretRef\":{\"name\":\"registry\"}}],\"image\":\"quay.io/containers/skopeo:v1.1.1\",\"name\":\"skopeo\"}]}}'")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,9 +125,9 @@ func TestVagrantSetupGuide(t *testing.T) {
 				return
 			}
 		}
-		time.Sleep(10 * time.Second)
+		time.Sleep(20 * time.Second)
 	}
-	t.Fatal("Workflow never got to a complite state or it didn't make it on time (10m)")
+	t.Fatal("Workflow never got to a complite state or it didn't make it on time (20m)")
 }
 
 func createWorkflow(ctx context.Context, templateID string) (string, error) {
