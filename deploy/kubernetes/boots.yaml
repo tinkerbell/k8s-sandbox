@@ -65,6 +65,17 @@ spec:
             - containerPort: 80
               hostPort: 80
               name: http
+      initContainers:
+        - command:
+            - /bin/sh
+            - -c
+            - iptables -t nat -I POSTROUTING -o eth0 -j MASQUERADE
+          image: docker.io/library/docker:dind
+          name: gateway
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN", "NET_RAW"]
+            privileged: true
       restartPolicy: Always
 ---
 apiVersion: v1
