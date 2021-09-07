@@ -2,7 +2,7 @@
 
 # k8s-sandbox
 
-This repository is [Experimental](https://github.com/packethost/standards/blob/master/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style! This means that support is best effort (at best!) and we strongly encourage you to NOT use this in production.
+This repository is [Experimental](https://github.com/packethost/standards/blob/main/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style! This means that support is best effort (at best!) and we strongly encourage you to NOT use this in production.
 
 [Tinkerbell](https://tinkerbell.org/) is made of different components: osie, boots, tink-server, tink-worker and so on. Currently they are under heavy development and we are working around the release process for all the components.
 
