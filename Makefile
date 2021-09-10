@@ -1,4 +1,3 @@
-
 # BEGIN: lint-install .
 # http://github.com/tinkerbell/lint-install
 
@@ -24,7 +23,7 @@ lint: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/l
 	out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck $(shell find . -name "*.sh")
 
 fix: out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)
-	out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) run test/_kind/ test/_vagrant  --fix
+	out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH) run test/_kind/ test/_vagrant --fix
 	out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck $(shell find . -name "*.sh") -f diff | git apply -p2 -
 
 out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck:
