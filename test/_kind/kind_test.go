@@ -121,8 +121,6 @@ func TestKindSetupGuide(t *testing.T) {
 		t.Logf("%s", out)
 		t.Fatal(err)
 	}
-
-
 	cmd = exec.CommandContext(ctx, "/bin/sh", "-c", "kubectl apply -f ../../deploy/kubernetes")
 	out, err = cmd.CombinedOutput()
 	if err != nil {
@@ -153,6 +151,7 @@ func TestKindSetupGuide(t *testing.T) {
 
 	for ii := 0; ii < 5; ii++ {
 		resp, err := http.Get("http://localhost:42114/healthz")
+
 		if err != nil || resp.StatusCode != http.StatusOK {
 			if err != nil {
 				t.Logf("err tinkerbell healthcheck... retrying: %s", err)
@@ -161,6 +160,8 @@ func TestKindSetupGuide(t *testing.T) {
 			}
 			time.Sleep(10 * time.Second)
 		}
+
+		resp.Body.Close()
 	}
 
 	t.Log("Tinkerbell is up and running")
@@ -172,7 +173,7 @@ func TestKindSetupGuide(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = registerHardware(ctx)
+	err = registerHardware()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -248,7 +249,7 @@ tasks:
 	return resp.Id, nil
 }
 
-func registerHardware(ctx context.Context) error {
+func registerHardware() error {
 	data := []byte(`{
   "id": "ce2e62ed-826f-4485-a39f-a82bb74338e2",
   "metadata": {

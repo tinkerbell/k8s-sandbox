@@ -65,6 +65,7 @@ func TestVagrantSetupGuide(t *testing.T) {
 			}
 			time.Sleep(10 * time.Second)
 		}
+		resp.Body.Close()
 	}
 
 	t.Log("Tinkerbell is up and running")
@@ -76,7 +77,7 @@ func TestVagrantSetupGuide(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = registerHardware(ctx)
+	err = registerHardware()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -162,7 +163,7 @@ tasks:
 	return resp.Id, nil
 }
 
-func registerHardware(ctx context.Context) error {
+func registerHardware() error {
 	data := []byte(`{
   "id": "ce2e62ed-826f-4485-a39f-a82bb74338e2",
   "metadata": {
