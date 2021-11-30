@@ -6,7 +6,7 @@ set -eux
 
 failed=0
 
-if ! git ls-files '*.md' '*.yaml' '*.yml' | xargs prettier --list-different --write; then
+if ! git ls-files '*.md' '*.yaml' '*.yml' | grep -v cert-manager | xargs prettier --list-different --write; then
 	failed=1
 fi
 
